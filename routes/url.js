@@ -20,7 +20,7 @@ router.post("/short", async (req,res) => {
 
   const urlCode = shortid.generate();
 
-  //check for the validity of the long url sumbilitted
+  //check for the validity of the long url submitted
 
   if(validUrl.isUri(longUrl)){
     try {
@@ -49,6 +49,36 @@ router.post("/short", async (req,res) => {
 
   }
 
+})
+
+//to change the system generated shorturl using custom urlcode
+//enter any code to generate a domain
+
+router.put("/short", async (req, res) => {
+    try{
+       const { shortUrl } = req.body;
+       const { newUrlCode } = req.body;
+       const baseUrl = config.get("baseUrl");
+       const newshortUrl = baseUrl + "/" + newUrlCode;
+        const url = await Url.findOne({ shortUrl });
+        if(url){
+            const testUrl = await Url.findOne({shortUrl : newshortUrl});
+            if(testUrl){
+                return res.json("this code is already in use");
+            }else{
+                url.urlCode = newUrlCode;
+                url.shortUrl = newshortUrl;
+                await url.save();
+                return res.json(url);
+            }
+        }else{
+            return res.json("the short url doesnt exist");
+        }
+
+    }catch(err){
+        log.warn(err);
+        res.status(500).json("server error");
+    }
 })
 
 module.exports = router;
